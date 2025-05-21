@@ -4,50 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🚨 น้องปลอดภัย</title>
-
-  <!-- CSS แบบ inline -->
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #fff3f3;
-      margin: 0;
-    }
-    h1 {
-      color: #d90000;
-    }
-    button {
-      background-color: red;
-      color: white;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    section {
-      margin-bottom: 20px;
-    }
-  </style>
-
-  <!-- manifest ใน script -->
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E0%B8%99%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%9B%E0%B8%A5%E0%B8%AD%E0%B8%94%E0%B8%A0%E0%B8%B1%E0%B8%A2%22,%22short_name%22:%22%E0%B8%9B%E0%B8%A5%E0%B8%AD%E0%B8%94%E0%B8%A0%E0%B8%B1%E0%B8%A2%22,%22start_url%22:%22index.html%22,%22display%22:%22standalone%22,%22background_color%22:%22%23fff3f3%22,%22theme_color%22:%22%23d90000%22,%22icons%22:[{%22src%22:%22icon.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}"/>
-
-  <!-- Service Worker Inline Register -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        const swBlob = new Blob([`
-          self.addEventListener("install", e => {
-            console.log("Service Worker installed");
-          });
-          self.addEventListener("fetch", e => {
-            // Basic fetch passthrough
-          });
-        `], { type: 'text/javascript' });
-
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl)
+        navigator.serviceWorker.register('service-worker.js')
           .then(reg => console.log('SW registered', reg))
           .catch(err => console.error('SW registration failed', err));
       });
@@ -111,29 +73,3 @@
   </script>
 </body>
 </html>
-
-</html>
-body {
-  font-family: sans-serif;
-  padding: 20px;
-  background-color: #fff3f3;
-  margin: 0;
-}
-h1 {
-  color: #d90000;
-}
-button {
-  background-color: red;
-  color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-section {
-  margin-bottom: 20px;
-}
-
-
-
