@@ -5,137 +5,135 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🚨 น้องปลอดภัย</title>
 
-  <!-- Leaflet แผนที่ -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+  <!-- CSS แบบ inline -->
   <style>
     body {
       font-family: sans-serif;
-      margin: 20px;
-      background-color: #f5f5f5;
+      padding: 20px;
+      background-color: #fff3f3;
+      margin: 0;
     }
-    h1, h2 {
-      color: #d32f2f;
-    }
-    #map {
-      height: 400px;
-      margin: 10px 0;
-    }
-    .news, .danger, .crowd {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-left: 5px solid #2196f3;
+    h1 {
+      color: #d90000;
     }
     button {
-      background: #d32f2f;
+      background-color: red;
       color: white;
       padding: 10px 20px;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
     }
+    section {
+      margin-bottom: 20px;
+    }
   </style>
+
+  <!-- manifest ใน script -->
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22%E0%B8%99%E0%B9%89%E0%B8%AD%E0%B8%87%E0%B8%9B%E0%B8%A5%E0%B8%AD%E0%B8%94%E0%B8%A0%E0%B8%B1%E0%B8%A2%22,%22short_name%22:%22%E0%B8%9B%E0%B8%A5%E0%B8%AD%E0%B8%94%E0%B8%A0%E0%B8%B1%E0%B8%A2%22,%22start_url%22:%22index.html%22,%22display%22:%22standalone%22,%22background_color%22:%22%23fff3f3%22,%22theme_color%22:%22%23d90000%22,%22icons%22:[{%22src%22:%22icon.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]}"/>
+
+  <!-- Service Worker Inline Register -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swBlob = new Blob([`
+          self.addEventListener("install", e => {
+            console.log("Service Worker installed");
+          });
+          self.addEventListener("fetch", e => {
+            // Basic fetch passthrough
+          });
+        `], { type: 'text/javascript' });
+
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl)
+          .then(reg => console.log('SW registered', reg))
+          .catch(err => console.error('SW registration failed', err));
+      });
+    }
+  </script>
 </head>
 <body>
   <h1>🚨 น้องปลอดภัย</h1>
 
-  <h2>📰 ข่าวความปลอดภัย</h2>
-  <div id="news-list">
-    <!-- ข่าวจะถูกโหลดจาก backend -->
-  </div>
+  <section>
+    <h2>📰 ข่าวความปลอดภัย</h2>
+    <ul id="news-list">กำลังโหลดข่าว...</ul>
+  </section>
 
-  <h2>📍 พื้นที่อันตราย</h2>
-  <div id="danger-zones"></div>
+  <section>
+    <h2>📍 พื้นที่อันตราย</h2>
+    <ul id="danger-list">กำลังโหลดข้อมูล...</ul>
+  </section>
 
-  <h2>🧍 จุดคนอยู่หนาแน่น</h2>
-  <div id="crowd-points"></div>
+  <section>
+    <h2>🗺 แผนที่</h2>
+    <div id="map">
+      <iframe 
+        width="100%" 
+        height="300" 
+        style="border:0;" 
+        loading="lazy"
+        allowfullscreen
+        src="https://maps.google.com/maps?q=มหาวิทยาลัยบูรพา&t=&z=15&ie=UTF8&iwloc=&output=embed">
+      </iframe>
+    </div>
+  </section>
 
-  <h2>🗺 แผนที่</h2>
-  <div id="map"></div>
-
-  <h2>🆘 ปุ่ม SOS</h2>
-  <button onclick="sendSOS()">ส่งสัญญาณ SOS</button>
+  <section>
+    <h2>🆘 ปุ่ม SOS</h2>
+    <button onclick="sendSOS()">ส่งสัญญาณ SOS</button>
+    <p id="sos-status"></p>
+  </section>
 
   <script>
-    // โหลดข่าวจาก backend
-    fetch('http://localhost:3001/api/news')
-      .then(res => res.json())
-      .then(data => {
-        const newsList = document.getElementById('news-list');
-        data.forEach(news => {
-          const div = document.createElement('div');
-          div.className = 'news';
-          div.innerHTML = `<strong>${news.title}</strong><br>${news.content}`;
-          newsList.appendChild(div);
-        });
-      })
-      .catch(() => {
-        document.getElementById('news-list').innerHTML = '<i>ไม่สามารถโหลดข่าวได้</i>';
-      });
+    async function fetchData() {
+      try {
+        const newsRes = await fetch("https://mocki.io/v1/42d23941-2e0e-4ec7-8c0e-38f984d58201");
+        const news = await newsRes.json();
+        document.getElementById("news-list").innerHTML = news.map(item => `<li>${item.title}</li>`).join("");
 
-    // ข้อมูลจำลอง
-    const dangerZones = [
-      { name: "ซอยเปลี่ยวหลังหอ A", lat: 13.282, lng: 100.925 },
-      { name: "หลังตึกคณะวิทย์", lat: 13.283, lng: 100.927 }
-    ];
-    const crowdPoints = [
-      { name: "หน้าเซเว่นประตูหลัง", lat: 13.284, lng: 100.926 },
-      { name: "หน้าตึก 22", lat: 13.282, lng: 100.928 }
-    ];
-
-    // แสดงข้อมูลจำลอง
-    const dzContainer = document.getElementById('danger-zones');
-    dangerZones.forEach(zone => {
-      const div = document.createElement('div');
-      div.className = 'danger';
-      div.innerText = zone.name;
-      dzContainer.appendChild(div);
-    });
-
-    const cpContainer = document.getElementById('crowd-points');
-    crowdPoints.forEach(p => {
-      const div = document.createElement('div');
-      div.className = 'crowd';
-      div.innerText = p.name;
-      cpContainer.appendChild(div);
-    });
-
-    // สร้างแผนที่
-    const map = L.map('map').setView([13.2825, 100.9266], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    // ปักหมุดพื้นที่อันตราย
-    dangerZones.forEach(zone => {
-      L.marker([zone.lat, zone.lng]).addTo(map)
-        .bindPopup(`⚠️ ${zone.name}`);
-    });
-
-    // ปักหมุดจุดคนเยอะ
-    crowdPoints.forEach(p => {
-      L.circle([p.lat, p.lng], {
-        color: 'green',
-        radius: 30
-      }).addTo(map).bindPopup(`🧍 ${p.name}`);
-    });
-
-    // ฟังก์ชัน SOS
-    function sendSOS() {
-      fetch('http://localhost:3001/api/sos', {
-        method: 'POST'
-      })
-        .then(res => res.json())
-        .then(data => {
-          alert(data.message || "ส่งสัญญาณสำเร็จ");
-        })
-        .catch(() => {
-          alert("❌ ส่งสัญญาณ SOS ไม่สำเร็จ");
-        });
+        const dangerRes = await fetch("https://mocki.io/v1/98e2dbee-8322-4787-9b84-089a410b46d0");
+        const danger = await dangerRes.json();
+        document.getElementById("danger-list").innerHTML = danger.map(item => `<li>${item.location}</li>`).join("");
+      } catch (e) {
+        document.getElementById("news-list").innerText = "❌ โหลดข่าวไม่สำเร็จ";
+        document.getElementById("danger-list").innerText = "❌ โหลดพื้นที่ไม่สำเร็จ";
+      }
     }
+
+    function sendSOS() {
+      document.getElementById("sos-status").innerText = "📡 ส่งสัญญาณ SOS แล้ว (จำลอง)";
+    }
+
+    fetchData();
   </script>
 </body>
 </html>
+
+</html>
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  background-color: #fff3f3;
+  margin: 0;
+}
+h1 {
+  color: #d90000;
+}
+button {
+  background-color: red;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+section {
+  margin-bottom: 20px;
+}
+
+
 
